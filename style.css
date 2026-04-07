@@ -1,0 +1,115 @@
+body {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  background: #ca1c87;
+}
+
+.container {
+  max-width: 800px;
+  margin: auto;
+  background: #ebc3dd;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.question {
+  margin-bottom: 20px;
+}
+
+.option {
+  margin-left: 20px;
+  margin-top: 5px;
+}
+
+.ranking {
+  list-style: none;
+  padding: 0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  min-height: 50px;
+}
+
+.ranking li {
+  padding: 10px;
+  margin: 5px;
+  background: #eee;
+  border-radius: 5px;
+  cursor: grab;
+}
+
+.ranking li.dragging {
+  opacity: 0.5;
+}
+
+.topbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+#langToggle {
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.navButtons {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+}
+
+#questionContainer {
+  margin-top: 20px;
+}
+
+#ranking {
+  list-style: none;
+  padding: 0;
+}
+
+.ranking-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  margin-bottom: 8px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  cursor: grab;
+  border: 1px solid #ddd;
+}
+
+.ranking-item.dragging {
+  opacity: 0.5;
+}
+
+.ranking-item {
+  cursor: default; /* inte hela boxen längre */
+}
+
+.rank-number {
+  font-weight: bold;
+  background: #4caf50;
+  color: white;
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rank-text {
+  flex: 1;
+}
+
+.drag-handle {
+  cursor: grab;
+  font-size: 18px;
+  padding: 4px;
+  user-select: none;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
