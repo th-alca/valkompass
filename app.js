@@ -105,7 +105,7 @@ function updateButtons() {
   document.getElementById("submitBtn").style.display =
     currentQuestion === surveyQuestions.length - 1 ? "inline-block" : "none";
 
-  // 🔒 lås knappar
+  //  lås knappar
   if (!answered) {
     document.getElementById("nextBtn").disabled = true;
     document.getElementById("submitBtn").disabled = true;
@@ -227,7 +227,7 @@ document.getElementById("submitBtn").onclick = () => {
   // 🔽 NY DEL – länken
   const linkText = document.createElement("p");
   linkText.innerHTML = `
-    Läs mer om partierna och vad de står för:
+    Valkompassen innehåller bara svar från de listor som har valt att delta. Här kan du läsa mer om samtliga listor och vad de står för:
     <a href="https://www.sus.se/karval" target="_blank">
       https://www.sus.se/karval
     </a>
