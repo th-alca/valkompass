@@ -1,7 +1,13 @@
+* {
+  box-sizing: border-box;
+}
+
 body {
   font-family: Arial, sans-serif;
   padding: 20px;
+  margin: 0;
   background: #ca1c87;
+  color: #111;
 }
 
 .container {
@@ -21,24 +27,8 @@ body {
   margin-top: 5px;
 }
 
-.ranking {
-  list-style: none;
-  padding: 0;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  min-height: 50px;
-}
-
-.ranking li {
-  padding: 10px;
-  margin: 5px;
-  background: #eee;
-  border-radius: 5px;
-  cursor: grab;
-}
-
-.ranking li.dragging {
-  opacity: 0.5;
+#questionContainer {
+  margin-top: 20px;
 }
 
 .topbar {
@@ -50,21 +40,36 @@ body {
 #langToggle {
   padding: 6px 12px;
   cursor: pointer;
+  border: 1px solid #bbb;
+  border-radius: 6px;
+  background: #fff;
 }
 
 .navButtons {
   margin-top: 20px;
   display: flex;
   justify-content: space-between;
+  gap: 10px;
 }
 
-#questionContainer {
-  margin-top: 20px;
+.navButtons button {
+  padding: 8px 14px;
+  border: 1px solid #bbb;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
 }
 
-#ranking {
+.navButtons button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+#ranking,
+.ranking {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 
 .ranking-item {
@@ -74,29 +79,26 @@ body {
   padding: 12px;
   margin-bottom: 8px;
   background: #f5f5f5;
-  border-radius: 8px;
-  cursor: grab;
   border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: default;
 }
 
 .ranking-item.dragging {
   opacity: 0.5;
 }
 
-.ranking-item {
-  cursor: default; /* inte hela boxen längre */
-}
-
 .rank-number {
-  font-weight: bold;
-  background: #4caf50;
-  color: white;
-  border-radius: 50%;
   width: 25px;
   height: 25px;
+  flex: 0 0 25px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-weight: bold;
+  color: #fff;
+  background: #4caf50;
+  border-radius: 50%;
 }
 
 .rank-text {
@@ -106,10 +108,19 @@ body {
 .drag-handle {
   cursor: grab;
   font-size: 18px;
+  line-height: 1;
   padding: 4px;
   user-select: none;
 }
 
 .drag-handle:active {
   cursor: grabbing;
+}
+
+#results {
+  margin-top: 25px;
+}
+
+#results h2 {
+  margin-top: 0;
 }
