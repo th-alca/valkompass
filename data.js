@@ -4,7 +4,7 @@ const surveyQuestions = [
     type: "single",
     question: {
       sv: "Vad tycker du är den viktigaste frågan för kåren att förbättra på campus?",
-      en: "What is the most important issue for the physical campus environment?"
+      en: "What is the most important issue for improving the physical campus environment?"
     },
     options: {
       sv: [
@@ -54,7 +54,7 @@ const surveyQuestions = [
     type: "single",
     question: {
       sv: "Vad är din syn på SUS som konsument och om att delta i bojkotter?",
-      en: "What is your view on SUS as a consumer and participation in boycotts?"
+      en: "What is your view on SUS as a consumer and on participating in boycotts?"
     },
     options: {
       sv: [
@@ -64,7 +64,7 @@ const surveyQuestions = [
         "Något positiv, men bör utföras selektivt"
       ],
       en: [
-        "Positive, both for SUS and as a stance to promote towards the university",
+        "Positive, both for SUS itself and as a policy it should encourage the university to adopt",
         "Positive, SUS is a large actor that can influence through consumer power",
         "Negative, it distracts from the core mission",
         "Somewhat positive, but it should be done selectively"
@@ -94,7 +94,7 @@ const surveyQuestions = [
         "Reduce student housing rents by easing construction regulations",
         "Stop deportations of prospective students",
         "Increase student financial aid (CSN)",
-        "Reform housing benefits to include more students"
+        "Reform housing benefits so that more students are eligible"
       ]
     }
   },
@@ -131,7 +131,7 @@ const surveyQuestions = [
     type: "single",
     question: {
       sv: "Vad är viktigast för dig som medlem att din studentkår står för?",
-      en: "What is most importent for you as a member that you student union stands for?"
+      en: "What is most important to you that your student union stands for?
     },
     options: {
       sv: [
