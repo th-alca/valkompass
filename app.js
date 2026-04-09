@@ -1,4 +1,5 @@
-const APP_TITLE = "Valkompass";
+const DOCUMENT_TITLE = "Valkompass";
+const HEADER_TITLE = "Valkompass SUS";
 const RANKING_TOP_COUNT = 3;
 
 let currentQuestion = 0;
@@ -8,11 +9,11 @@ let userAnswers = [];
 /* --------------------------- title --------------------------- */
 
 function applyAppTitle() {
-  document.title = APP_TITLE;
+  document.title = DOCUMENT_TITLE;
 
   const titleEl = document.getElementById("title");
   if (titleEl) {
-    titleEl.textContent = APP_TITLE;
+    titleEl.textContent = HEADER_TITLE;
   }
 }
 
