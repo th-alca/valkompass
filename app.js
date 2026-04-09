@@ -1,4 +1,4 @@
-const APP_TITLE = "Kårval 2026";
+const APP_TITLE = "Valkompass";
 const RANKING_TOP_COUNT = 3;
 
 let currentQuestion = 0;
