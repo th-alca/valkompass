@@ -5,6 +5,7 @@ let userAnswers = [];
 /* --------------------------- seed per user/session --------------------------- */
 
 let sessionSeed = sessionStorage.getItem("valkompassSeed");
+
 if (!sessionSeed) {
   sessionSeed = String(Date.now() + Math.floor(Math.random() * 1000000));
   sessionStorage.setItem("valkompassSeed", sessionSeed);
@@ -93,6 +94,7 @@ function renderQuestion() {
 
       label.appendChild(input);
       label.appendChild(document.createTextNode(" " + opt));
+
       container.appendChild(label);
       container.appendChild(document.createElement("br"));
     });
@@ -103,7 +105,6 @@ function renderQuestion() {
     ul.id = "ranking";
 
     let saved = userAnswers[currentQuestion];
-
     if (!Array.isArray(saved) || saved.length !== q.options[language].length) {
       saved = [...getOptionOrder(q)];
       userAnswers[currentQuestion] = [...saved];
@@ -113,13 +114,11 @@ function renderQuestion() {
       const li = document.createElement("li");
       li.className = "ranking-item";
       li.dataset.index = optIndex;
-
       li.innerHTML = `
-        <span class="drag-handle" aria-hidden="true">☰</span>
+        <span class="drag-handle">☰</span>
         <span class="rank-number">${index + 1}</span>
-        <span class="rank-text">${q.options[language][optIndex]}</span>
+        ${q.options[language][optIndex]}
       `;
-
       ul.appendChild(li);
     });
 
@@ -214,6 +213,7 @@ function matchParties(userAnswers, parties) {
           if (Array.isArray(userAnswer)) {
             userAnswer.forEach((ua, userPos) => {
               const partyPos = partyAnswer.indexOf(ua);
+
               if (partyPos >= 0) {
                 total += n - Math.abs(userPos - partyPos);
               }
@@ -221,19 +221,23 @@ function matchParties(userAnswers, parties) {
           }
         } else {
           maxScore += 1;
+
           if (userAnswer === partyAnswer) {
             total += 1;
           }
         }
       });
 
+      const ratio = maxScore > 0 ? total / maxScore : 0;
+
       return {
         party: party.name,
         score: total,
-        maxScore: maxScore
+        maxScore: maxScore,
+        ratio: ratio
       };
     })
-    .sort((a, b) => b.score - a.score);
+    .sort((a, b) => b.ratio - a.ratio || b.score - a.score);
 }
 
 function isAnswered() {
@@ -257,14 +261,10 @@ document.getElementById("submitBtn").onclick = () => {
   const resultsDiv = document.getElementById("results");
 
   resultsDiv.style.display = "block";
-  resultsDiv.innerHTML =
-    language === "sv"
-      ? "<h2>Resultat</h2>"
-      : "<h2>Results</h2>";
+  resultsDiv.innerHTML = language === "sv" ? "<h2>Resultat</h2>" : "<h2>Results</h2>";
 
   matched.forEach((p) => {
-    const percent =
-      p.maxScore > 0 ? Math.round((p.score / p.maxScore) * 100) : 0;
+    const percent = Math.round(p.ratio * 100);
 
     const row = document.createElement("div");
     row.style.marginBottom = "14px";
@@ -289,12 +289,12 @@ document.getElementById("submitBtn").onclick = () => {
 
   if (language === "sv") {
     linkText.innerHTML =
-      'Valkompassen innehåller bara svar från de listor som har valt att delta. ' +
+      'Valkompassen innehåller bara svar från de listor som har valt att delta.<br>' +
       'Här kan du läsa mer om samtliga listor och vad de står för: ' +
       '<a href="https://www.sus.se/karval" target="_blank" rel="noopener noreferrer">sus.se/karval</a>';
   } else {
     linkText.innerHTML =
-      'This voting guide only includes answers from the lists that chose to participate. ' +
+      'This voting guide only includes answers from the lists that chose to participate.<br>' +
       'You can read more about all lists and what they stand for here: ' +
       '<a href="https://www.sus.se/karval" target="_blank" rel="noopener noreferrer">sus.se/karval</a>';
   }
