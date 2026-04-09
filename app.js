@@ -1,6 +1,20 @@
+const APP_TITLE = "Kårval 2026";
+const RANKING_TOP_COUNT = 3;
+
 let currentQuestion = 0;
 let language = "sv";
 let userAnswers = [];
+
+/* --------------------------- title --------------------------- */
+
+function applyAppTitle() {
+  document.title = APP_TITLE;
+
+  const titleEl = document.getElementById("title");
+  if (titleEl) {
+    titleEl.textContent = APP_TITLE;
+  }
+}
 
 /* --------------------------- seed per user/session --------------------------- */
 
@@ -56,9 +70,92 @@ function getOptionOrder(q) {
   return questionOptionOrder[key];
 }
 
+/* --------------------------- ranking helpers --------------------------- */
+
+function getRankingInstructionText() {
+  return language === "sv"
+    ? "<strong>Välj dina tre viktigaste alternativ.</strong> Dra och släpp så att plats 1–3 hamnar överst. Bara de tre översta räknas i resultatet."
+    : "<strong>Choose your three most important options.</strong> Drag and drop so that positions 1–3 are at the top. Only the top three count in the result.";
+}
+
+function getRankingBadgeText() {
+  return language === "sv" ? "Räknas med" : "Counts";
+}
+
+function updateRankingUI(listEl = document.getElementById("ranking")) {
+  if (!listEl) return;
+
+  const items = listEl.querySelectorAll("li");
+
+  items.forEach((li, index) => {
+    const rankNumber = li.querySelector(".rank-number");
+    const badge = li.querySelector(".rank-badge");
+    const isCounted = index < RANKING_TOP_COUNT;
+
+    if (rankNumber) {
+      rankNumber.textContent = index + 1;
+    }
+
+    li.style.background = isCounted ? "#eef8ee" : "#f5f5f5";
+    li.style.border = isCounted ? "1px solid #4caf50" : "1px solid #ddd";
+    li.style.boxShadow = isCounted ? "0 0 0 1px rgba(76, 175, 80, 0.08)" : "none";
+
+    if (badge) {
+      badge.textContent = isCounted ? getRankingBadgeText() : "";
+      badge.style.display = isCounted ? "inline-block" : "none";
+      badge.style.marginLeft = "8px";
+      badge.style.padding = "3px 8px";
+      badge.style.fontSize = "12px";
+      badge.style.fontWeight = "600";
+      badge.style.color = "#2e7d32";
+      badge.style.background = "#dff0df";
+      badge.style.borderRadius = "999px";
+      badge.style.whiteSpace = "nowrap";
+    }
+  });
+}
+
+function saveRanking() {
+  const items = document.querySelectorAll("#ranking li");
+  userAnswers[currentQuestion] = Array.from(items).map((li) =>
+    parseInt(li.dataset.index, 10)
+  );
+}
+
+function scoreTopRanking(userRanking, partyRanking, topCount = RANKING_TOP_COUNT) {
+  if (!Array.isArray(userRanking) || !Array.isArray(partyRanking)) {
+    return { score: 0, maxScore: 0 };
+  }
+
+  const userTop = userRanking.slice(0, topCount);
+  const partyTop = partyRanking.slice(0, topCount);
+  const n = Math.min(topCount, userTop.length, partyTop.length);
+
+  if (n === 0) {
+    return { score: 0, maxScore: 0 };
+  }
+
+  let total = 0;
+
+  userTop.forEach((ua, userPos) => {
+    const partyPos = partyTop.indexOf(ua);
+
+    if (partyPos >= 0) {
+      total += n - Math.abs(userPos - partyPos);
+    }
+  });
+
+  return {
+    score: total,
+    maxScore: n * n
+  };
+}
+
 /* --------------------------- render --------------------------- */
 
 function renderQuestion() {
+  applyAppTitle();
+
   const container = document.getElementById("questionContainer");
   const q = surveyQuestions[currentQuestion];
 
@@ -101,8 +198,20 @@ function renderQuestion() {
   }
 
   if (q.type === "ranking") {
+    const info = document.createElement("p");
+    info.innerHTML = getRankingInstructionText();
+    info.style.marginTop = "0";
+    info.style.marginBottom = "14px";
+    info.style.padding = "12px";
+    info.style.background = "#f2f7ff";
+    info.style.border = "1px solid #d8e6ff";
+    info.style.borderRadius = "8px";
+    info.style.lineHeight = "1.45";
+    container.appendChild(info);
+
     const ul = document.createElement("ul");
     ul.id = "ranking";
+    ul.className = "ranking";
 
     let saved = userAnswers[currentQuestion];
     if (!Array.isArray(saved) || saved.length !== q.options[language].length) {
@@ -114,46 +223,32 @@ function renderQuestion() {
       const li = document.createElement("li");
       li.className = "ranking-item";
       li.dataset.index = optIndex;
+
       li.innerHTML = `
-        <span class="drag-handle">☰</span>
+        <span class="drag-handle" aria-hidden="true">☰</span>
         <span class="rank-number">${index + 1}</span>
-        ${q.options[language][optIndex]}
+        <span class="rank-text">${q.options[language][optIndex]}</span>
+        <span class="rank-badge"></span>
       `;
+
+      container.appendChild(ul);
       ul.appendChild(li);
     });
 
-    container.appendChild(ul);
+    updateRankingUI(ul);
 
     new Sortable(ul, {
       animation: 150,
       handle: ".drag-handle",
       onEnd: () => {
-        updateRankingNumbers();
         saveRanking();
+        updateRankingUI(ul);
         updateButtons();
       }
     });
   }
 
   updateButtons();
-}
-
-function updateRankingNumbers() {
-  const items = document.querySelectorAll("#ranking li");
-
-  items.forEach((li, index) => {
-    const rankNumber = li.querySelector(".rank-number");
-    if (rankNumber) {
-      rankNumber.textContent = index + 1;
-    }
-  });
-}
-
-function saveRanking() {
-  const items = document.querySelectorAll("#ranking li");
-  userAnswers[currentQuestion] = Array.from(items).map((li) =>
-    parseInt(li.dataset.index, 10)
-  );
 }
 
 /* --------------------------- buttons --------------------------- */
@@ -169,6 +264,20 @@ function updateButtons() {
 
   document.getElementById("nextBtn").disabled = !answered;
   document.getElementById("submitBtn").disabled = !answered;
+}
+
+function isAnswered() {
+  const answer = userAnswers[currentQuestion];
+
+  if (answer === undefined || answer === null) {
+    return false;
+  }
+
+  if (Array.isArray(answer)) {
+    return answer.length > 0;
+  }
+
+  return true;
 }
 
 document.getElementById("nextBtn").onclick = () => {
@@ -207,18 +316,9 @@ function matchParties(userAnswers, parties) {
         }
 
         if (Array.isArray(partyAnswer)) {
-          const n = partyAnswer.length;
-          maxScore += n * n;
-
-          if (Array.isArray(userAnswer)) {
-            userAnswer.forEach((ua, userPos) => {
-              const partyPos = partyAnswer.indexOf(ua);
-
-              if (partyPos >= 0) {
-                total += n - Math.abs(userPos - partyPos);
-              }
-            });
-          }
+          const rankingScore = scoreTopRanking(userAnswer, partyAnswer, RANKING_TOP_COUNT);
+          total += rankingScore.score;
+          maxScore += rankingScore.maxScore;
         } else {
           maxScore += 1;
 
@@ -238,20 +338,6 @@ function matchParties(userAnswers, parties) {
       };
     })
     .sort((a, b) => b.ratio - a.ratio || b.score - a.score);
-}
-
-function isAnswered() {
-  const answer = userAnswers[currentQuestion];
-
-  if (answer === undefined || answer === null) {
-    return false;
-  }
-
-  if (Array.isArray(answer)) {
-    return answer.length > 0;
-  }
-
-  return true;
 }
 
 /* --------------------------- submit --------------------------- */
@@ -336,4 +422,5 @@ const parties = [
   }
 ];
 
+applyAppTitle();
 renderQuestion();
