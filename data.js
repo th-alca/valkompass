@@ -1,339 +1,157 @@
-let currentQuestion = 0;
-let language = "sv";
-let userAnswers = [];
-
-/* --------------------------- seed per user/session --------------------------- */
-
-let sessionSeed = sessionStorage.getItem("valkompassSeed");
-
-if (!sessionSeed) {
-  sessionSeed = String(Date.now() + Math.floor(Math.random() * 1000000));
-  sessionStorage.setItem("valkompassSeed", sessionSeed);
-}
-
-function seededRandomGenerator(seedString) {
-  let h = 2166136261;
-
-  for (let i = 0; i < seedString.length; i++) {
-    h ^= seedString.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-
-  return function () {
-    h += 0x6D2B79F5;
-    let t = h;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function shuffledIndices(length, seedKey) {
-  const arr = Array.from({ length }, (_, i) => i);
-  const rand = seededRandomGenerator(seedKey);
-
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-
-  return arr;
-}
-
-// Keep the same option order for a given user/session and question.
-const questionOptionOrder = {};
-
-function getOptionOrder(q) {
-  const key = String(q.id);
-
-  if (!questionOptionOrder[key]) {
-    questionOptionOrder[key] = shuffledIndices(
-      q.options.sv.length,
-      `${sessionSeed}_${key}`
-    );
-  }
-
-  return questionOptionOrder[key];
-}
-
-/* --------------------------- render --------------------------- */
-
-function renderQuestion() {
-  const container = document.getElementById("questionContainer");
-  const q = surveyQuestions[currentQuestion];
-
-  container.style.display = "block";
-  container.innerHTML = "";
-
-  const title = document.createElement("h2");
-  title.textContent = q.question[language];
-  container.appendChild(title);
-
-  if (q.type === "single" || q.type === "required") {
-    const optionOrder = getOptionOrder(q);
-
-    optionOrder.forEach((originalIndex) => {
-      const opt = q.options[language][originalIndex];
-
-      const label = document.createElement("label");
-      label.className = "option";
-
-      const input = document.createElement("input");
-      input.type = "radio";
-      input.name = "q" + q.id;
-      input.value = originalIndex;
-
-      if (userAnswers[currentQuestion] === originalIndex) {
-        input.checked = true;
-      }
-
-      input.addEventListener("change", () => {
-        userAnswers[currentQuestion] = originalIndex;
-        updateButtons();
-      });
-
-      label.appendChild(input);
-      label.appendChild(document.createTextNode(" " + opt));
-
-      container.appendChild(label);
-      container.appendChild(document.createElement("br"));
-    });
-  }
-
-  if (q.type === "ranking") {
-    const ul = document.createElement("ul");
-    ul.id = "ranking";
-
-    let saved = userAnswers[currentQuestion];
-    if (!Array.isArray(saved) || saved.length !== q.options[language].length) {
-      saved = [...getOptionOrder(q)];
-      userAnswers[currentQuestion] = [...saved];
+const surveyQuestions = [
+  {
+    id: 1,
+    type: "single",
+    question: {
+      sv: "Vad tycker du är den viktigaste frågan för kåren att förbättra på campus?",
+      en: "What is the most important issue for improving the physical campus environment?"
+    },
+    options: {
+      sv: [
+        "Utomhusbelysning på kvällar och mornar",
+        "Förbättra den fysiska arbetsmiljön såsom ventilationen.",
+        "Bättre tillgänglighetsanpassningar",
+        "Ge tillgång till barnpassning för studenter med barnansvar",
+        "Fler mikrovågsugnar och fräschare studentkök"
+      ],
+      en: [
+        "Outdoor lighting in mornings and evenings",
+        "Improve the physical work environment (e.g. ventilation)",
+        "Better accessibility adaptations",
+        "Provide childcare for students with children",
+        "More microwaves and improved student kitchens"
+      ]
     }
+  },
 
-    saved.forEach((optIndex, index) => {
-      const li = document.createElement("li");
-      li.className = "ranking-item";
-      li.dataset.index = optIndex;
-      li.innerHTML = `
-        <span class="drag-handle">☰</span>
-        <span class="rank-number">${index + 1}</span>
-        ${q.options[language][optIndex]}
-      `;
-      ul.appendChild(li);
-    });
-
-    container.appendChild(ul);
-
-    new Sortable(ul, {
-      animation: 150,
-      handle: ".drag-handle",
-      onEnd: () => {
-        updateRankingNumbers();
-        saveRanking();
-        updateButtons();
-      }
-    });
-  }
-
-  updateButtons();
-}
-
-function updateRankingNumbers() {
-  const items = document.querySelectorAll("#ranking li");
-
-  items.forEach((li, index) => {
-    const rankNumber = li.querySelector(".rank-number");
-    if (rankNumber) {
-      rankNumber.textContent = index + 1;
+  {
+    id: 2,
+    type: "required",
+    question: {
+      sv: "Tycker du att kåren ska ta ställning i internationella konflikter?",
+      en: "Should the student union take positions on international conflicts?"
+    },
+    options: {
+      sv: [
+        "Ja, universitet är en internationell miljö och vad som händer i omvärlden påverkar oss alla",
+        "Ja, men SUS bör prioritera frågor som har en tydlig koppling till studentperspektivet.",
+        "Nej, fokuset bör endast ligga på frågor om att förbättra saker på campus och för SUs studenter.",
+        "Nej, det riskerar att polarisera studenterna.",
+        "Ja, att inte ta ställning är att stå på förtryckarnas sida."
+      ],
+      en: [
+        "Yes, universities are international environments and global events affect us all",
+        "Yes, but SUS should prioritize issues clearly connected to the student perspective",
+        "No, focus should only be on improving campus and conditions for SU students",
+        "No, it risks polarizing students",
+        "Yes, not taking a stance means siding with oppression"
+      ]
     }
-  });
-}
-
-function saveRanking() {
-  const items = document.querySelectorAll("#ranking li");
-  userAnswers[currentQuestion] = Array.from(items).map((li) =>
-    parseInt(li.dataset.index, 10)
-  );
-}
-
-/* --------------------------- buttons --------------------------- */
-
-function updateButtons() {
-  const answered = isAnswered();
-  const isFirst = currentQuestion === 0;
-  const isLast = currentQuestion === surveyQuestions.length - 1;
-
-  document.getElementById("prevBtn").style.display = isFirst ? "none" : "inline-block";
-  document.getElementById("nextBtn").style.display = isLast ? "none" : "inline-block";
-  document.getElementById("submitBtn").style.display = isLast ? "inline-block" : "none";
-
-  document.getElementById("nextBtn").disabled = !answered;
-  document.getElementById("submitBtn").disabled = !answered;
-}
-
-document.getElementById("nextBtn").onclick = () => {
-  if (currentQuestion < surveyQuestions.length - 1) {
-    currentQuestion++;
-    renderQuestion();
-  }
-};
-
-document.getElementById("prevBtn").onclick = () => {
-  if (currentQuestion > 0) {
-    currentQuestion--;
-    renderQuestion();
-  }
-};
-
-document.getElementById("langToggle").onclick = () => {
-  language = language === "sv" ? "en" : "sv";
-  document.getElementById("langToggle").textContent = language === "sv" ? "EN" : "SV";
-  renderQuestion();
-};
-
-/* --------------------------- matching --------------------------- */
-
-function matchParties(userAnswers, parties) {
-  return parties
-    .map((party) => {
-      let total = 0;
-      let maxScore = 0;
-
-      party.answers.forEach((partyAnswer, idx) => {
-        const userAnswer = userAnswers[idx];
-
-        if (partyAnswer === null || partyAnswer === undefined) {
-          return;
-        }
-
-        if (Array.isArray(partyAnswer)) {
-          const n = partyAnswer.length;
-          maxScore += n * n;
-
-          if (Array.isArray(userAnswer)) {
-            userAnswer.forEach((ua, userPos) => {
-              const partyPos = partyAnswer.indexOf(ua);
-
-              if (partyPos >= 0) {
-                total += n - Math.abs(userPos - partyPos);
-              }
-            });
-          }
-        } else {
-          maxScore += 1;
-
-          if (userAnswer === partyAnswer) {
-            total += 1;
-          }
-        }
-      });
-
-      const ratio = maxScore > 0 ? total / maxScore : 0;
-
-      return {
-        party: party.name,
-        score: total,
-        maxScore: maxScore,
-        ratio: ratio
-      };
-    })
-    .sort((a, b) => b.ratio - a.ratio || b.score - a.score);
-}
-
-function isAnswered() {
-  const answer = userAnswers[currentQuestion];
-
-  if (answer === undefined || answer === null) {
-    return false;
-  }
-
-  if (Array.isArray(answer)) {
-    return answer.length > 0;
-  }
-
-  return true;
-}
-
-/* --------------------------- submit --------------------------- */
-
-document.getElementById("submitBtn").onclick = () => {
-  const matched = matchParties(userAnswers, parties);
-  const resultsDiv = document.getElementById("results");
-
-  resultsDiv.style.display = "block";
-  resultsDiv.innerHTML = language === "sv" ? "<h2>Resultat</h2>" : "<h2>Results</h2>";
-
-  matched.forEach((p) => {
-    const percent = Math.round(p.ratio * 100);
-
-    const row = document.createElement("div");
-    row.style.marginBottom = "14px";
-
-    const label = document.createElement("div");
-    label.textContent = `${p.party} – ${percent}%`;
-    label.style.marginBottom = "4px";
-
-    const bar = document.createElement("div");
-    bar.style.height = "20px";
-    bar.style.background = "green";
-    bar.style.width = percent + "%";
-    bar.style.borderRadius = "4px";
-
-    row.appendChild(label);
-    row.appendChild(bar);
-    resultsDiv.appendChild(row);
-  });
-
-  const linkText = document.createElement("p");
-  linkText.style.marginTop = "20px";
-
-  if (language === "sv") {
-    linkText.innerHTML =
-      'Valkompassen innehåller bara svar från de listor som har valt att delta.<br>' +
-      'Här kan du läsa mer om samtliga listor och vad de står för: ' +
-      '<a href="https://www.sus.se/karval" target="_blank" rel="noopener noreferrer">sus.se/karval</a>';
-  } else {
-    linkText.innerHTML =
-      'This voting guide only includes answers from the lists that chose to participate.<br>' +
-      'You can read more about all lists and what they stand for here: ' +
-      '<a href="https://www.sus.se/karval" target="_blank" rel="noopener noreferrer">sus.se/karval</a>';
-  }
-
-  resultsDiv.appendChild(linkText);
-
-  document.getElementById("questionContainer").style.display = "none";
-  document.getElementById("prevBtn").style.display = "none";
-  document.getElementById("nextBtn").style.display = "none";
-  document.getElementById("submitBtn").style.display = "none";
-};
-
-/* --------------------------- party answers --------------------------- */
-
-const parties = [
-  {
-    name: "Trygghetslistan",
-    answers: [0, 1, null, [0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5], 2]
   },
+
   {
-    name: "S-Studenter",
-    answers: [null, 0, 0, [3, 4, 1, 5, 0, 2], [5, 0, 4, 1, 2, 3], 3]
+    id: 3,
+    type: "single",
+    question: {
+      sv: "Vad är din syn på SUS som konsument och om att delta i bojkotter?",
+      en: "What is your view on SUS as a consumer and on participating in boycotts?"
+    },
+    options: {
+      sv: [
+        "Positiv, både för SUS och vi bör driva på gentemot universitetet",
+        "Positiv, SUS är stor aktör som kan påverka genom konsumentmakt",
+        "Negativ, det tar bort fokus från kärnuppdraget",
+        "Något positiv, men bör utföras selektivt"
+      ],
+      en: [
+        "Positive, both for SUS itself and as a policy it should encourage the university to adopt",
+        "Positive, SUS is a large actor that can influence through consumer power",
+        "Negative, it distracts from the core mission",
+        "Somewhat positive, but it should be done selectively"
+      ]
+    }
   },
+
   {
-    name: "Vänsterns studentförening",
-    answers: [1, 0, 0, [4, 3, 0, 5, 2, 1], [2, 0, 4, 3, 5, 1], 3]
+    id: 4,
+    type: "ranking",
+    question: {
+      sv: "I vilken ordning skulle du prioritera följande högskolepolitiska frågor?",
+      en: "In what order would you rank the following higher education policy issues?"
+    },
+    options: {
+      sv: [
+        "Förändra regler kring CSN och gör det mer flexibelt",
+        "Reformera Akademiska hus",
+        "Minska hyresnivåer på studentbostäder genom att slopa regler för nybyggnation",
+        "Stoppa utvisningar av blivande studenter",
+        "Höja CSN",
+        "Reformera bostadsbidraget så att fler kan ta del"
+      ],
+      en: [
+        "Make student finance (CSN) more flexible",
+        "Reform Akademiska Hus (state-owned property company)",
+        "Reduce student housing rents by easing construction regulations",
+        "Stop deportations of prospective students",
+        "Increase student financial aid (CSN)",
+        "Reform housing benefits so that more students are eligible"
+      ]
+    }
   },
+
   {
-    name: "Framtidens Vänster – Studenterna",
-    answers: [3, 0, 0, [4, 3, 1, 2, 5, 0], [2, 4, 0, 5, 1, 3], 3]
+    id: 5,
+    type: "ranking",
+    question: {
+      sv: "I vilken ordning skulle du ranka följande initiativ för att förbättra Stockholm som studentstad?",
+      en: "In what order would you rank the following initiatives for making Stockholm a better city for students?"
+    },
+    options: {
+      sv: [
+        "Sänkta hyror för studentbostäder i Stockholm",
+        "Bättre kommunikationer mellan SUs olika campus",
+        "Frysta hyror för studentbostäder i Stockholm",
+        "Bättre studentbostäder, höj standarden",
+        "Bättre studentrabatt på SL-biljetter",
+        "Ökad byggtakt för studentbostäder i Stockholm"
+      ],
+      en: [
+        "Lower rents for student housing in Stockholm",
+        "Better transport between SU campuses",
+        "Freeze student housing rents in Stockholm",
+        "Improve student housing quality",
+        "Better student discounts on public transport (SL)",
+        "Increase construction of student housing in Stockholm"
+      ]
+    }
   },
+
   {
-    name: "Högerstudenter",
-    answers: [0, 2, 2, [2, 0, 1, 4, 5, 3], [5, 4, 1, 0, 2, 3], 1]
-  },
-  {
-    name: "MED och Fria Studenter",
-    answers: [null, 3, 2, [2, 0, 1, 3, 5, 4], [5, 1, 2, 3, 0, 4], 4]
+    id: 6,
+    type: "single",
+    question: {
+      sv: "Vad är viktigast för dig som medlem att din studentkår står för?",
+      en: "What is most important to you that your student union stands for?
+    },
+    options: {
+      sv: [
+        "För att genom samverkan förbättra tillgängligheten och tillgången till studier på SU",
+        "Värna den akademiska friheten och stoppa vänstervridningen av SU",
+        "För att verka för ett tryggare campus",
+        "En kårpolitik som präglas av jämlikhet, demokrati, feminism och antirasism",
+        "Utmana kårens generella vänstervridning",
+        "Lyfta den internationella solidariteten på SU",
+        "En kår som verkar för en jämlik studietid"
+      ],
+      en: [
+        "To improve access to and conditions for studies at SU through cooperation",
+        "Defend academic freedom and counter left-wing bias at SU",
+        "To promote a safer campus",
+        "A student union policy based on equality, democracy, feminism and anti-racism",
+        "Challenge the union’s general left-wing bias",
+        "Promote international solidarity at SU",
+        "A union that works for equal study conditions"
+      ]
+    }
   }
 ];
-
-renderQuestion();
