@@ -1,6 +1,7 @@
 let currentQuestion = 0;
 let language = "sv";
 let userAnswers = [];
+const RANKING_TOP_COUNT = 3;
 
 /* --------------------------- seed per user/session --------------------------- */
 
@@ -56,6 +57,12 @@ function getOptionOrder(q) {
   return questionOptionOrder[key];
 }
 
+function getRankingInstructionText() {
+  return language === "sv"
+    ? "Dra alternativen så att dina tre viktigaste hamnar överst. Bara plats 1–3 räknas i resultatet."
+    : "Drag the options so that your three most important choices are at the top. Only positions 1–3 count in the result.";
+}
+
 /* --------------------------- render --------------------------- */
 
 function renderQuestion() {
@@ -101,6 +108,15 @@ function renderQuestion() {
   }
 
   if (q.type === "ranking") {
+    const info = document.createElement("p");
+    info.textContent = getRankingInstructionText();
+    info.style.marginTop = "0";
+    info.style.marginBottom = "14px";
+    info.style.padding = "10px 12px";
+    info.style.background = "#f3f7ff";
+    info.style.borderRadius = "8px";
+    container.appendChild(info);
+
     const ul = document.createElement("ul");
     ul.id = "ranking";
 
@@ -123,6 +139,7 @@ function renderQuestion() {
     });
 
     container.appendChild(ul);
+    updateRankingNumbers();
 
     new Sortable(ul, {
       animation: 150,
@@ -145,6 +162,14 @@ function updateRankingNumbers() {
     const rankNumber = li.querySelector(".rank-number");
     if (rankNumber) {
       rankNumber.textContent = index + 1;
+    }
+
+    if (index < RANKING_TOP_COUNT) {
+      li.style.background = "#eef8ee";
+      li.style.border = "1px solid #4caf50";
+    } else {
+      li.style.background = "";
+      li.style.border = "";
     }
   });
 }
@@ -207,18 +232,19 @@ function matchParties(userAnswers, parties) {
         }
 
         if (Array.isArray(partyAnswer)) {
-          const n = partyAnswer.length;
+          const n = Math.min(RANKING_TOP_COUNT, partyAnswer.length);
+          const partyTop = partyAnswer.slice(0, n);
+          const userTop = Array.isArray(userAnswer) ? userAnswer.slice(0, n) : [];
+
           maxScore += n * n;
 
-          if (Array.isArray(userAnswer)) {
-            userAnswer.forEach((ua, userPos) => {
-              const partyPos = partyAnswer.indexOf(ua);
+          userTop.forEach((ua, userPos) => {
+            const partyPos = partyTop.indexOf(ua);
 
-              if (partyPos >= 0) {
-                total += n - Math.abs(userPos - partyPos);
-              }
-            });
-          }
+            if (partyPos >= 0) {
+              total += n - Math.abs(userPos - partyPos);
+            }
+          });
         } else {
           maxScore += 1;
 
