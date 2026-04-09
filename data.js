@@ -23,7 +23,6 @@ const surveyQuestions = [
       ]
     }
   },
-
   {
     id: 2,
     type: "required",
@@ -48,7 +47,6 @@ const surveyQuestions = [
       ]
     }
   },
-
   {
     id: 3,
     type: "single",
@@ -71,7 +69,6 @@ const surveyQuestions = [
       ]
     }
   },
-
   {
     id: 4,
     type: "ranking",
@@ -98,7 +95,6 @@ const surveyQuestions = [
       ]
     }
   },
-
   {
     id: 5,
     type: "ranking",
@@ -125,13 +121,12 @@ const surveyQuestions = [
       ]
     }
   },
-
   {
     id: 6,
     type: "single",
     question: {
       sv: "Vad är viktigast för dig som medlem att din studentkår står för?",
-      en: "What is most important to you that your student union stands for?
+      en: "What is most important to you that your student union stands for?"
     },
     options: {
       sv: [
