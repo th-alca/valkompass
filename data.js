@@ -57,7 +57,7 @@ const surveyQuestions = [
     options: {
       sv: [
         "Positiv, både för SUS och vi bör driva på gentemot universitetet",
-        "Positiv, SUS är stor aktör som kan påverka genom konsumentmakt",
+        "Positiv, SUS är stor en aktör som kan påverka genom konsumentmakt",
         "Negativ, det tar bort fokus från kärnuppdraget",
         "Något positiv, men bör utföras selektivt"
       ],
